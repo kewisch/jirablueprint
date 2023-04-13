@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+jira = "*"
+click = "*"
+pyyaml = "*"
+
+[dev-packages]
+black = "*"
+isort = "*"
+flake8 = "*"
+
+[requires]
+python_version = "3"
+
+[scripts]
+lint = "sh -c 'black jirablueprint; isort jirablueprint; flake8 jirablueprint'"
+jirabp = "python jirablueprint/cli.py"
