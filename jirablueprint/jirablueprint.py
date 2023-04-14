@@ -37,7 +37,9 @@ class JiraBlueprint:
         )
 
         self.toolconfig = (
-            config["tools"]["jiraclone"] if "jiraclone" in config["tools"] else {}
+            config["tools"]["jirablueprint"]
+            if "jirablueprint" in config["tools"]
+            else {}
         )
         self.serviceconfig = config["services"]
         self.debug = debug

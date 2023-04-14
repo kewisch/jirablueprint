@@ -134,7 +134,7 @@ def fromtemplate(ctx, fname, template_name, args, parent, edit):
     if edit:
         content = yaml.dump(template)
         while True:
-            content = click.edit(content)
+            content = click.edit(content, extension=".yaml")
             if len(content.strip()) == 0:
                 return
 
