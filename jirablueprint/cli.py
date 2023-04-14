@@ -121,7 +121,7 @@ def fromtemplate(ctx, fname, template_name, args, parent, edit):
             "You need to either pass -f or set a template_file in the tool config"
         )
 
-    with open(template_file) as fd:
+    with open(os.path.expanduser(template_file)) as fd:
         templates = yaml.safe_load(fd)
 
     if template_name not in templates:
