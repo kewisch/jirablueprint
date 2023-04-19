@@ -26,11 +26,11 @@ tools:
 Installation and Use
 --------------------
 
-This project is using pipenv to manage dependencies, and requires Python 3. Here is how to install and run:
+This project uses setuptools via `pyproject.toml`. Install it as you like, one way to do so is using
+`pipx install --editable .` in the source repo. It installs a `jirabp` command:
 
 ```bash
-$ pipenv install
-$ pipenv run jirabp --help
+$ jirabp
 Usage: jirabp [OPTIONS] COMMAND [ARGS]...
 
 Options:

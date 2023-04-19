@@ -1,0 +1,61 @@
+[project]
+name = "jirablueprint"
+version = "1.0.1"
+description = "A tool to create Jira tickets from a YAML template file"
+authors = [
+  { name = "Philipp Kewisch", email = "code@kewis.ch" }
+]
+requires-python = ">=3.6"
+dependencies = [
+  "jira",
+  "click",
+  "pyyaml"
+]
+[project.urls]
+homepage = "https://github.com/kewisch/jirablueprint"
+
+[project.optional-dependencies]
+dev = [
+  "black",
+  "isort",
+  "flake8",
+  "Flake8-pyproject"
+]
+
+[project.scripts]
+jirabp = "jirablueprint.cli:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.flake8]
+ignore = ["E203", "E266", "E501", "W503"]
+max-line-length = 88
+max-complexity = 18
+select = ["B","C","E","F","W","T4"]
+
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 88
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py3
+
+[testenv]
+deps =
+  black
+  isort
+  flake8
+  Flake8-pyproject
+commands =
+ black src
+ isort src
+ flake8 src
+"""
