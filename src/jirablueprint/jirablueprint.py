@@ -1,8 +1,12 @@
 import http.client
+import json
 import logging
+from datetime import date, timedelta
 from functools import cached_property
 
 import click
+import type_enforced
+from jinja2 import Environment
 from jira import JIRA
 
 from .util import ConsolePrinter
@@ -24,6 +28,7 @@ class JiraBlueprint:
         self.serviceconfig = config["services"]
         self.debug = debug
         self.console = ConsolePrinter(debug)
+        self.init_jinja_environment()
 
         if debug:
             logging.basicConfig()
@@ -32,6 +37,15 @@ class JiraBlueprint:
             requests_log.setLevel(logging.DEBUG)
             requests_log.propagate = True
             http.client.HTTPConnection.debuglevel = 1
+
+    def init_jinja_environment(self):
+        self.tenv = Environment()
+
+        @type_enforced.Enforcer
+        def relative_weeks(datestr: str, weeks: int) -> str:
+            return date.fromisoformat(datestr) + timedelta(weeks=weeks)
+
+        self.tenv.globals["relative_weeks"] = relative_weeks
 
     @cached_property
     def full_fields_map(self):
@@ -55,10 +69,7 @@ class JiraBlueprint:
         return self.toolconfig["defaults"].get(name, default)
 
     def _format_value(self, value, args):
-        try:
-            return str(value).format(**args)
-        except KeyError as e:
-            raise click.UsageError(f"Missing arg '{e.args[0]}' in field: {value}")
+        return self.tenv.from_string(value).render(**args)
 
     def _translate_type_value(self, schema, value, args):
         if schema["type"] in ("string", "date", "datetime", "option2", "any"):

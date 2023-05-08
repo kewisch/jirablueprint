@@ -9,7 +9,9 @@ requires-python = ">=3.6"
 dependencies = [
   "jira",
   "click",
-  "pyyaml"
+  "pyyaml",
+  "jinja2",
+  "type_enforced"
 ]
 [project.urls]
 homepage = "https://github.com/kewisch/jirablueprint"

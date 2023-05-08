@@ -63,13 +63,13 @@ conference:                                                   # The name of the 
   issues:                                                     # An array of top-level issues to create
     - fields:                                                 # This is the first issue
         issuetype: Epic                                       # It is an epic
-        summary: "{conference} Conference"                    # Here we parameterize the conference name
-        duedate: "{conference_date}"                          # Other formats such as dates are also ok
+        summary: "{{conference}} Conference"                    # Here we parameterize the conference name
+        duedate: "{{conference_date}}"                          # Other formats such as dates are also ok
         T-shirt size: L                                       # It can also have custom fields, they
-        Epic Name: "{conference}"                             #       start with an uppercase letter
+        Epic Name: "{{conference}}"                             #       start with an uppercase letter
         description: |                                        # Multiline descriptions are also fine
-          Conference planning for {conference}.
-          URL: {url}
+          Conference planning for {{conference}}.
+          URL: {{url}}
       children:                                               # Here is where we define child issue
         - fields:
             issuetype: Task                                   # Just make sure the issue type is compatible
@@ -87,3 +87,9 @@ next_template:                                                # We can also defi
         issuetype: Task
         summary: ...
 ```
+
+The template engine used is [https://jinja.palletsprojects.com](Jinja2). The following template globals are available:
+
+* `relative_weeks(datestr: str, weeks: int) -> str`: Add/remove weeks from a certain date
+  * `datestr`: The date string to add/remove weeks from
+  * `weeks`: The number of weeks to add/remove
