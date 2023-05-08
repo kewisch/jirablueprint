@@ -57,9 +57,14 @@ Here is an example template file. No projects is specified, it is assumed this i
 ```yaml
 conference:                                                   # The name of the template
   args:                                                       # Parameters the template uses
-    conference: The name of the conference, e.g. 'DebConf'
-    conference_date: The date the conference is occurring
-    url: The URL of the conference website
+    conference:
+      description: The name of the conference, e.g. 'DebConf'
+      required: true
+    conference_date:
+      description: The date the conference is occurring
+      required: true
+    url:
+      description:  The URL of the conference website
   issues:                                                     # An array of top-level issues to create
     - fields:                                                 # This is the first issue
         issuetype: Epic                                       # It is an epic
@@ -69,7 +74,9 @@ conference:                                                   # The name of the 
         Epic Name: "{{conference}}"                             #       start with an uppercase letter
         description: |                                        # Multiline descriptions are also fine
           Conference planning for {{conference}}.
+          {% if url %}
           URL: {{url}}
+          {% endif %}
       children:                                               # Here is where we define child issue
         - fields:
             issuetype: Task                                   # Just make sure the issue type is compatible
