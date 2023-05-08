@@ -5,7 +5,7 @@ import stat
 import click
 import yaml
 
-from jirablueprint import JiraBlueprint
+from .jirablueprint import JiraBlueprint
 
 
 @click.group()

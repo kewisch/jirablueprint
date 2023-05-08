@@ -1,2 +1,5 @@
 *.json
 templates.yaml
+*.egg-info
+__pycache__
+build/

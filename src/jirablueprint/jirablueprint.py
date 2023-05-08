@@ -5,27 +5,7 @@ from functools import cached_property
 import click
 from jira import JIRA
 
-
-class ConsolePrinter:
-    def __init__(self, debug):
-        self._debug = debug
-        self._indent = 0
-
-    def indent(self):
-        self._indent += 1
-
-    def dedent(self):
-        self._indent -= 1
-
-    def print(self, *args, end="\n", indent=True):
-        if indent:
-            print("\t" * self._indent + str(args[0]), *args[1:], end=end)
-        else:
-            print(*args, end=end)
-
-    def debug(self, *args, end="\n", indent=True):
-        if self._debug:
-            self.print(*args, end=end)
+from .util import ConsolePrinter
 
 
 class JiraBlueprint:
@@ -114,9 +94,20 @@ class JiraBlueprint:
                     raise click.UsageError(f"'{key}' is not a valid field id or name")
                 key = self.rev_fields_map[key]
 
-            finalfields[key] = self._translate_type_value(
-                self.full_fields_map[key]["schema"], value, args
-            )
+            try:
+                finalfields[key] = self._translate_type_value(
+                    self.full_fields_map[key].get("schema", {"type": "any"}),
+                    value,
+                    args,
+                )
+            except KeyError as e:
+                raise Exception(
+                    f"Unknown field {e.args[0]} in '{fields.get('summary', '<unknown issue>')}'"
+                ) from e
+            except Exception as e:
+                raise Exception(
+                    f"Error evaluating '{value}' in '{fields.get('summary', '<unknown issue>')}"
+                ) from e
 
         if "project" not in finalfields:
             finalfields["project"] = self.defaultfield("project")
