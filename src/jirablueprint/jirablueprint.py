@@ -114,19 +114,29 @@ class JiraBlueprint:
 
         return finalfields
 
-    def process_issues(self, issues, args, parent=None):
+    def process_issues(self, issues, args, parent=None, dry=False):
         for issuemeta in issues:
             finalfields = self._translate_issue(issuemeta, args)
 
             if parent:
                 finalfields["parent"] = {"key": parent}
 
-            self.console.print(f"Creating issue {finalfields['summary']}...", end="")
-            self.console.debug(finalfields, end="")
-            issue = self.jira.create_issue(fields=finalfields)
-            self.console.print(" " + issue.permalink(), indent=False)
+            issue = None
+            if dry:
+                self.console.print(f"Would creating issue {finalfields['summary']}...")
+                self.console.indent()
+                self.console.debug(json.dumps(finalfields, indent=2))
+                self.console.dedent()
+            else:
+                self.console.print(
+                    f"Creating issue {finalfields['summary']}...", end=""
+                )
+                issue = self.jira.create_issue(fields=finalfields)
+                self.console.print(" " + issue.permalink(), indent=False)
 
             if "children" in issuemeta:
                 self.console.indent()
-                self.process_issues(issuemeta["children"], args, issue.key)
+                self.process_issues(
+                    issuemeta["children"], args, issue.key if issue else None, dry
+                )
                 self.console.dedent()

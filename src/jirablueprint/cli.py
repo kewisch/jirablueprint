@@ -98,13 +98,14 @@ def createmeta(ctx, project, issuetype):
 @main.command()
 @click.option("-f", "--file", "fname", help="Template yaml file to load from")
 @click.option("-p", "--parent", help="Parent to use for the top level items")
+@click.option("-n", "--dry", is_flag=True, help="Don't actually create issues")
 @click.option(
     "-e", "--edit", is_flag=True, help="Revise the template before creating issues"
 )
 @click.argument("template_name", required=True)
 @click.argument("args", nargs=-1)
 @click.pass_obj
-def fromtemplate(ctx, fname, template_name, args, parent, edit):
+def fromtemplate(ctx, fname, template_name, args, parent, dry, edit):
     """Create a set of issues from a YAML template.
 
     This command will create any number of issues from your template YAML file TEMPLATE_NAME. You
@@ -155,7 +156,13 @@ def fromtemplate(ctx, fname, template_name, args, parent, edit):
                     f"Missing argument '{arg}' ({description})"
                 )
 
-    ctx.process_issues(template["issues"], supplied_args, parent)
+    try:
+        ctx.process_issues(template["issues"], supplied_args, parent, dry)
+    except Exception as e:
+        if ctx.debug:
+            raise
+        else:
+            raise click.ClickException(f"{e}:\n\t{e.__cause__}") from e
 
 
 if __name__ == "__main__":
