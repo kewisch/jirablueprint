@@ -151,10 +151,10 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, edit):
     supplied_args = dict(kv.split("=", 1) for kv in args)
 
     if "args" in template:
-        for arg, description in template["args"].items():
-            if arg not in supplied_args:
+        for arg, argdata in template["args"].items():
+            if arg not in supplied_args and argdata["required"]:
                 raise click.BadArgumentUsage(
-                    f"Missing argument '{arg}' ({description})"
+                    f"Missing argument '{arg}' ({argdata['description']})"
                 )
 
     try:
