@@ -6,6 +6,7 @@ import click
 import yaml
 
 from .jirablueprint import JiraBlueprint
+from .util import compile_issue_template
 
 
 @click.group()
@@ -163,6 +164,57 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, edit):
             raise
         else:
             raise click.ClickException(f"{e}:\n\t{e.__cause__}") from e
+
+
+@main.command()
+@click.pass_obj
+@click.argument("issuetype", required=True)
+@click.option("-p", "--project", help="The project to create the issue on")
+def create(ctx, issuetype, project):
+    """Create a JIRA issue with your editor
+
+    Starts an editor with some YAML that allows you to quickly create an issue. ISSUETYPE is the
+    type of issue to create (e.g. Epic)
+    """
+
+    issuetype = issuetype[0].upper() + issuetype[1:]
+    project = project or ctx.defaultfield("project")
+    pinned = ctx.toolconfig.get("pinned", [])
+    meta = ctx.jira.createmeta(
+        projectKeys=project,
+        issuetypeNames=issuetype,
+        expand="projects.issuetypes.fields",
+    )
+
+    issuetypemeta = next(
+        (x for x in meta["projects"][0]["issuetypes"] if x["name"] == issuetype), None
+    )
+
+    template = compile_issue_template(issuetypemeta, issuetype, project, pinned)
+
+    error = "---"
+
+    while error:
+        template = click.edit(error + "\n" + template, extension=".yaml")
+        if not template:
+            return
+        error = None
+
+        templatedata = yaml.safe_load(template)
+        issuetemplate = templatedata[issuetype.lower()]
+
+        finaldata = {}
+        for fieldid, field in issuetypemeta["fields"].items():
+            if field["name"] not in issuetemplate or not issuetemplate[field["name"]]:
+                continue
+
+            finaldata[fieldid] = issuetemplate[field["name"]]
+
+        try:
+            issue = ctx.jira.create_issue(fields=finaldata)
+            click.echo(issue.permalink())
+        except Exception as e:
+            error = "# Exception: " + "\n# ".join(str(e).split("\n")) + "\n"
 
 
 if __name__ == "__main__":
