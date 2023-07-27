@@ -43,7 +43,7 @@ class JiraBlueprint:
 
         @type_enforced.Enforcer
         def relative_weeks(datestr: str, weeks: int) -> str:
-            return date.fromisoformat(datestr) + timedelta(weeks=weeks)
+            return str(date.fromisoformat(datestr) + timedelta(weeks=weeks))
 
         self.tenv.globals["relative_weeks"] = relative_weeks
 
