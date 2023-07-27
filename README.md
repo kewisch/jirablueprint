@@ -14,12 +14,21 @@ services:
     url: "https://warthogs.atlassian.net"
     username: "your_email"
     token: "your_jira_token"        # Get this from
-                                    #   https://id.atlassian.com/manage-profile/security/api-tokens
+  jirastage:                        #   https://id.atlassian.com/manage-profile/security/api-tokens
+    url: "https://warthogs-stage.atlassian.net"
+    username: "your_email"
+    token: "your_jira_token"
 tools:
   jirablueprint:
     template_file: "template.yaml"  # Path to the templates file to use by default
     defaults:
       project: CT                   # The default project to apply if not specified in the template
+    usermap:                        # A map of usernames to account ids. You need this if you want
+      jira:                         #   to use the --assignee argument. To look up user ids, do a
+        myalias: 1275128412841      #   JQL search for `assignee = <now autocomplete the name>`
+        otheralias: 6943943852525   #   and grab it from the URL.
+      jirastage:                    # If you have multiple jiras, define them per service name
+        myalias: 1256986469654
 ```
 
 

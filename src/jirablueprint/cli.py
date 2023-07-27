@@ -99,6 +99,7 @@ def createmeta(ctx, project, issuetype):
 @main.command()
 @click.option("-f", "--file", "fname", help="Template yaml file to load from")
 @click.option("-p", "--parent", help="Parent to use for the top level items")
+@click.option("-a", "--assignee", help="Set assignee for all created issues")
 @click.option("-n", "--dry", is_flag=True, help="Don't actually create issues")
 @click.option(
     "-e", "--edit", is_flag=True, help="Revise the template before creating issues"
@@ -106,7 +107,7 @@ def createmeta(ctx, project, issuetype):
 @click.argument("template_name", required=True)
 @click.argument("args", nargs=-1)
 @click.pass_obj
-def fromtemplate(ctx, fname, template_name, args, parent, dry, edit):
+def fromtemplate(ctx, fname, template_name, args, parent, dry, assignee, edit):
     """Create a set of issues from a YAML template.
 
     This command will create any number of issues from your template YAML file TEMPLATE_NAME. You
@@ -157,8 +158,17 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, edit):
                     f"Missing argument '{arg}' ({argdata['description']})"
                 )
 
+    if assignee:
+        usermap = ctx.toolconfig.get("usermap", {}).get(ctx.jiraname, {})
+        if assignee not in usermap:
+            raise click.UsageError(f"Missing {assignee} in config's usermap")
+
+        assignee = usermap[assignee]
+
     try:
-        ctx.process_issues(template["issues"], supplied_args, parent, dry)
+        ctx.process_issues(
+            template["issues"], supplied_args, parent=parent, dry=dry, assignee=assignee
+        )
     except Exception as e:
         if ctx.debug:
             raise

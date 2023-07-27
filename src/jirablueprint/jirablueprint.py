@@ -15,6 +15,7 @@ from .util import ConsolePrinter
 class JiraBlueprint:
     def __init__(self, config, jira="jira", debug=False):
         jconfig = config["services"][jira]
+        self.jiraname = jira
         self.jira = JIRA(
             jconfig["url"],
             basic_auth=(jconfig["username"], jconfig["token"]),
@@ -129,12 +130,15 @@ class JiraBlueprint:
 
         return finalfields
 
-    def process_issues(self, issues, args, parent=None, dry=False):
+    def process_issues(self, issues, args, parent=None, assignee=None, dry=False):
         for issuemeta in issues:
             finalfields = self._translate_issue(issuemeta, args)
 
             if parent:
                 finalfields["parent"] = {"key": parent}
+
+            if assignee:
+                finalfields["assignee"] = {"id": assignee}
 
             issue = None
             if dry:
