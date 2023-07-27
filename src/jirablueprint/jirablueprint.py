@@ -71,7 +71,9 @@ class JiraBlueprint:
     def _format_value(self, value, args):
         return self.tenv.from_string(value).render(**args)
 
-    def _translate_type_value(self, schema, value, args):
+    def _translate_type_value(self, key, schema, value, args):
+        if key == "parent":
+            return {"key": value}
         if schema["type"] in ("string", "date", "datetime", "option2", "any"):
             return self._format_value(value, args)
         elif schema["type"] == "number":
@@ -86,7 +88,7 @@ class JiraBlueprint:
             return list(
                 map(
                     lambda item: self._translate_type_value(
-                        {"type": schema["items"]}, item, args
+                        key, {"type": schema["items"]}, item, args
                     ),
                     value,
                 )
@@ -106,8 +108,10 @@ class JiraBlueprint:
                 key = self.rev_fields_map[key]
 
             try:
+                schema = self.full_fields_map[key].get("schema", {"type": "any"})
                 finalfields[key] = self._translate_type_value(
-                    self.full_fields_map[key].get("schema", {"type": "any"}),
+                    key,
+                    schema,
                     value,
                     args,
                 )
