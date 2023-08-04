@@ -65,6 +65,7 @@ Here is an example template file. No projects is specified, it is assumed this i
 
 ```yaml
 conference:                                                   # The name of the template
+  edit: true                                                  # Force editing mode for this template (optional)
   args:                                                       # Parameters the template uses
     conference:
       description: The name of the conference, e.g. 'DebConf'

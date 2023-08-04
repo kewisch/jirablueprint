@@ -133,7 +133,9 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, assignee, edit):
 
     template = templates[template_name]
 
-    if edit:
+    if edit or template.get("edit", False):
+        template.pop("edit", None)
+
         content = yaml.dump(template)
         while True:
             content = click.edit(content, extension=".yaml")
