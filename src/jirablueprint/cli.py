@@ -3,10 +3,9 @@ import os.path
 import stat
 
 import click
-import yaml
 
 from .jirablueprint import JiraBlueprint
-from .util import compile_issue_template
+from .util import compile_issue_template, yaml
 
 
 @click.group()
@@ -32,7 +31,7 @@ def main(ctx, debug, jira, config):
         raise click.ClickException(f"Credentials file {config} is not chmod 600")
 
     with open(configpath) as fd:
-        config = yaml.safe_load(fd)
+        config = yaml.load(fd)
 
     if not config:
         raise click.ClickException(f"Could not load config file {configpath}")
@@ -125,7 +124,7 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, assignee, edit):
         )
 
     with open(os.path.expanduser(template_file)) as fd:
-        templates = yaml.safe_load(fd)
+        templates = yaml.load(fd)
 
     if template_name not in templates:
         raise click.BadArgumentUsage(
@@ -142,7 +141,7 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, assignee, edit):
                 return
 
             try:
-                template = yaml.safe_load(content)
+                template = yaml.load(content)
                 break
             except Exception as e:
                 content = (
@@ -210,7 +209,7 @@ def create(ctx, issuetype, project):
             return
         error = None
 
-        templatedata = yaml.safe_load(template)
+        templatedata = yaml.load(template)
         issuetemplate = templatedata[issuetype.lower()]
 
         finaldata = {}

@@ -9,7 +9,7 @@ requires-python = ">=3.6"
 dependencies = [
   "jira",
   "click",
-  "pyyaml",
+  "ruamel.yaml",
   "jinja2",
   "type_enforced"
 ]
