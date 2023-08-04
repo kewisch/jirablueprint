@@ -101,12 +101,15 @@ def createmeta(ctx, project, issuetype):
 @click.option("-a", "--assignee", help="Set assignee for all created issues")
 @click.option("-n", "--dry", is_flag=True, help="Don't actually create issues")
 @click.option(
+    "-v", "--verbose", is_flag=True, help="Be verbose when showing template arguments"
+)
+@click.option(
     "-e", "--edit", is_flag=True, help="Revise the template before creating issues"
 )
-@click.argument("template_name", required=True)
+@click.argument("template_name", required=False)
 @click.argument("args", nargs=-1)
 @click.pass_obj
-def fromtemplate(ctx, fname, template_name, args, parent, dry, assignee, edit):
+def fromtemplate(ctx, fname, template_name, args, parent, dry, verbose, assignee, edit):
     """Create a set of issues from a YAML template.
 
     This command will create any number of issues from your template YAML file TEMPLATE_NAME. You
@@ -125,6 +128,23 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, assignee, edit):
 
     with open(os.path.expanduser(template_file)) as fd:
         templates = yaml.load(fd)
+
+    # No template specified, list them for usage
+    if not template_name:
+        if verbose:
+            print("Args starting with ? are optional\n")
+        for key, template in templates.items():
+            args = ""
+            for arg, data in template["args"].items():
+                args += f" {arg}=" + ("required" if data["required"] else "optional")
+            print(f"jirabp fromtemplate {key:20} {args}")
+
+            if verbose:
+                for arg, data in template["args"].items():
+                    argname = "?" if not data.get("required", False) else "" + arg
+                    print(f"\t{argname:>40}: {data['description']}")
+
+        return
 
     if template_name not in templates:
         raise click.BadArgumentUsage(
