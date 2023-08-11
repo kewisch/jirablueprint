@@ -39,22 +39,23 @@ This project uses setuptools via `pyproject.toml`. Install it as you like, one w
 `pipx install --editable .` in the source repo. It installs a `jirabp` command:
 
 ```bash
-$ jirabp
+$ jirabp --help
 Usage: jirabp [OPTIONS] COMMAND [ARGS]...
 
 Options:
-  --debug        Enable debugging
-  --config TEXT  Config file location
-  --jira TEXT    Which jira config to use
+  --debug        Enable debugging.
+  --config TEXT  Config file location.
+  --jira TEXT    Which jira config to use, refers to an entry in the services
+                 section.
   --help         Show this message and exit.
 
 Commands:
-  createmeta    Show creation metadata
-  dump          Dump issue fileds
-  fieldmeta     Show field meta
-  fields        Show field names
-  fromtemplate  Create a set of issues from template
-  issue         Show issue
+  create        Create a JIRA issue with your editor.
+  createmeta    [DEBUG] Show JIRA create metadata.
+  fieldmeta     [DEBUG] Show field metadata.
+  fields        [DEBUG] Show JIRA field names.
+  fromtemplate  Create a set of issues from a YAML template.
+  issue         [DEBUG] Show issue fields.
 ```
 
 
@@ -110,3 +111,101 @@ The template engine used is [https://jinja.palletsprojects.com](Jinja2). The fol
 * `relative_weeks(datestr: str, weeks: int) -> str`: Add/remove weeks from a certain date
   * `datestr`: The date string to add/remove weeks from
   * `weeks`: The number of weeks to add/remove
+
+
+Tips & Tricks
+-------------
+
+### Default Arguments
+
+You can make use of jinja's default() filter to do default arguments:
+```yaml
+defaultargs:
+  args:
+    summary:
+      description: Ticket summary
+  issues:
+    - fields:
+        issuetype: Task
+        summary: "{{summary|default('default summary')}}"
+```
+
+### Calculate fields
+
+Jinja has [a bunch of neat built-ins](https://jinja.palletsprojects.com/en/3.1.x/templates).
+Calculate fields based on args:
+
+```yaml
+merchandise:
+  args:
+    attendees:
+      description: How may people are coming
+  issues:
+    - fields:
+      issuetype: Task
+      summary: Order merch
+      description: |
+        Order merch for conference. {{attendees}} attendees.
+          * {{ (1.5 * attendees)|round }} stickers round
+          * {{ (0.8 * attendees)|round }} stickers square
+
+```
+
+### Set parent issue
+
+You can attach a bunch of tasks to an epic using the `--parent` argument:
+
+```yaml
+attachtoepic:
+  issues:
+    - fields:
+        issuetype: Task
+        summary: Task 1
+    - fields:
+        issuetype: Task
+        summary: Task 2
+```
+
+`jirabp fromtemplate attachtoepic -p EPICS-123`
+
+### Don't repeat yourself with YAML
+
+You can make use of YAML anchors and aliases to not repeat yourself, e.g. include one set of issues in the next:
+
+```yaml
+smaller_task:
+  issues: &smaller_task_issues
+    - fields:
+        issuetype: Task
+        summary: Task 1
+    - fields:
+        issuetype: Task
+        summary: Task 2
+
+bigger_picture:
+  issues:
+    - fields:
+        issuetype: Epic
+        summary: Epic 1
+      children: *smaller_task_issues
+
+```
+
+The tool doesn't do strict semantic parsing on the yaml, so you can also drop some anchors into an unused section and reuse them:
+
+```yaml
+chicken:
+  mydefaults:
+    - &chicken chicken
+  issues:
+    - fields:
+        issuetype: Epic
+        summary: *chicken
+      children:
+        - fields:
+           issuetype: Task
+           summary: *chicken
+        - fields:
+           issuetype: Task
+           summary: *chicken
+```

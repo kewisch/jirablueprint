@@ -216,14 +216,21 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, verbose, assignee
 
 
 @main.command()
+@click.argument("issue")
+@click.pass_obj
+def test(ctx, issue):
+    print(json.dumps(ctx.jira.issue(issue).raw, indent=2))
+
+
+@main.command()
 @click.pass_obj
 @click.argument("issuetype", required=True)
 @click.option("-p", "--project", help="The project to create the issue on")
 def create(ctx, issuetype, project):
-    """Create a JIRA issue with your editor
+    """Create a JIRA issue with your editor.
 
     Starts an editor with some YAML that allows you to quickly create an issue. ISSUETYPE is the
-    type of issue to create (e.g. Epic)
+    type of issue to create (e.g. Epic).
     """
 
     issuetype = issuetype[0].upper() + issuetype[1:]
