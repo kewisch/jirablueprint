@@ -119,15 +119,33 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, verbose, assignee
 
     It is recommended to set the template file path in your configuration file.
     """
-    template_file = fname or ctx.toolconfig.get("template_file", None)
+    template_path = fname or ctx.toolconfig.get(
+        "templates", ctx.toolconfig.get("template_file", None)
+    )
 
-    if not template_file:
+    if not template_path:
         raise click.UsageError(
             "You need to either pass -f or set a template_file in the tool config"
         )
 
-    with open(os.path.expanduser(template_file)) as fd:
-        templates = yaml.load(fd)
+    template_path = os.path.expanduser(template_path)
+
+    if os.path.isdir(template_path):
+        templates = {}
+        for path in os.listdir(template_path):
+            if path.endswith(".yaml"):
+                with open(os.path.join(template_path, path)) as fd:
+                    thisyaml = yaml.load(fd)
+                    duplicates = thisyaml.keys() & templates.keys()
+                    if duplicates:
+                        raise click.UsageError(
+                            f"Duplicate template names in {path}: {','.join(duplicates)}"
+                        )
+                    templates.update(thisyaml)
+
+    else:
+        with open(template_path) as fd:
+            templates = yaml.load(fd)
 
     # No template specified, list them for usage
     if not template_name:
@@ -148,7 +166,7 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, verbose, assignee
 
     if template_name not in templates:
         raise click.BadArgumentUsage(
-            f"Could not find template {template_name} in {template_file}"
+            f"Could not find template {template_name} in {template_path}"
         )
 
     template = templates[template_name]

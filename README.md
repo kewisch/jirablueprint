@@ -20,8 +20,8 @@ services:
     token: "your_jira_token"
 tools:
   jirablueprint:
-    template_file: "template.yaml"  # Path to the templates file to use by default
-    defaults:
+    templates: "template.yaml"      # Path to the templates file to use by default. This can also
+    defaults:                       #  be a directory that contains multiple .yaml files.
       project: CT                   # The default project to apply if not specified in the template
     usermap:                        # A map of usernames to account ids. You need this if you want
       jira:                         #   to use the --assignee argument. To look up user ids, do a
