@@ -153,12 +153,12 @@ def fromtemplate(ctx, fname, template_name, args, parent, dry, verbose, assignee
             print("Args starting with ? are optional\n")
         for key, template in templates.items():
             args = ""
-            for arg, data in template["args"].items():
+            for arg, data in template.get("args", {}).items():
                 args += f" {arg}=" + ("required" if data["required"] else "optional")
             print(f"jirabp fromtemplate {key:20} {args}")
 
             if verbose:
-                for arg, data in template["args"].items():
+                for arg, data in template.get("args", {}).items():
                     argname = "?" if not data.get("required", False) else "" + arg
                     print(f"\t{argname:>40}: {data['description']}")
 
