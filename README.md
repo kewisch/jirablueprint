@@ -209,3 +209,35 @@ chicken:
            issuetype: Task
            summary: *chicken
 ```
+
+### Checklists
+Checklists are essentially text fields with some UI sugar on top. This means you can use a string:
+
+```yaml
+checkcheck:
+  issues:
+    - fields:
+      issuetype: Task
+      summary: Checkbox test
+      Checklist: |
+        #Default checklist
+        * [open] Item 1
+        * [open] Item 2
+```
+
+Note that there are sometimes multiple fields called "Checklist", some of which are read-only. In
+this case you'll have to find the ID of the field and use that instead.
+
+### Dealing with unknown fields
+Sometimes you might not be sure what the format is for a field. There are a few debug commands available:
+
+```shell
+jirabp fields                         # Show a mapping from field id (e.g. customfield_12345) to their pretty name
+jirabp issue KEY-123                  # Show the json view of a specific issue
+jirabp fieldmeta customfield_12345    # Show the metadata for a specific field
+jirabp createmeta KEY Epic            # Show required fields for a specific issue type
+```
+
+One approach is to create an issue that looks like you want it to, then use `jirabp issue KEY-123`
+to find out what the field value looks like. Then drop it into the yaml and see if you can reproduce
+the same result.
