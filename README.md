@@ -120,6 +120,8 @@ The template engine used is [https://jinja.palletsprojects.com](Jinja2). The fol
 * `sprint_for_date(datestr: str, board: Optional[int] = None) -> str`: Get the sprint name for a date
   * `datestr`: The date to find a sprint for
   * `board`: The sprint board, defaults to the default value from config
+* `active_sprint(board: Optional[int] = None) -> str`: Get the (first) currently active sprint
+  * `board`: The sprint board, defaults to the default value from config
 
 
 Tips & Tricks

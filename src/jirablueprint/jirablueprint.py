@@ -102,7 +102,7 @@ class JiraBlueprint:
                 formatted = self._format_value(value["sprint"], args)
             else:
                 board = None
-                formatted = self.format_value(value, args)
+                formatted = self._format_value(value, args)
 
             if isinstance(formatted, int):
                 return {"set": formatted}

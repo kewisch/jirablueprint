@@ -12,6 +12,7 @@ class JiraBlueprintEnvironment(Environment):
         self.globals["relative_weeks"] = self.relative_weeks
         self.globals["sprint_for_date"] = self.sprint_for_date
         self.globals["relative_sprints"] = self.relative_sprints
+        self.globals["active_sprint"] = self.active_sprint
 
     def _format_sprint_date(self, datestr):
         return datetime.strptime(datestr, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -43,6 +44,13 @@ class JiraBlueprintEnvironment(Environment):
             raise Exception("No active/future sprint found at " + datestr)
 
         return sprint.name
+
+    @type_enforced.Enforcer
+    def active_sprint(self, board: [int, None] = None) -> str:
+        for sprint in self.jirabp.get_sprints(board):
+            if sprint.state == "active":
+                return sprint.name
+        raise Exception(f"No active sprint on board {board}")
 
     @type_enforced.Enforcer
     def relative_sprints(
