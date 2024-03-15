@@ -23,6 +23,7 @@ tools:
     templates: "template.yaml"      # Path to the templates file to use by default. This can also
     defaults:                       #  be a directory that contains multiple .yaml files.
       project: CT                   # The default project to apply if not specified in the template
+      board: 995                    # The default board, for sprint-related functions
     usermap:                        # A map of usernames to account ids. You need this if you want
       jira:                         #   to use the --assignee argument. To look up user ids, do a
         myalias: 1275128412841      #   JQL search for `assignee = <now autocomplete the name>`
@@ -111,6 +112,14 @@ The template engine used is [https://jinja.palletsprojects.com](Jinja2). The fol
 * `relative_weeks(datestr: str, weeks: int) -> str`: Add/remove weeks from a certain date
   * `datestr`: The date string to add/remove weeks from
   * `weeks`: The number of weeks to add/remove
+* `relative_sprints(sprintstr: str, sprints: int, board: Optional[int] = None) -> str`: Add/remove sprints from a certain sprint
+  * For technical reasons your sprints will have to be at least 4 days
+  * `sprintestr`: The name of the sprint to base calculation on
+  * `sprints`: The amount of sprints to add/remove
+  * `board`: The sprint board, defaults to the default value from config
+* `sprint_for_date(datestr: str, board: Optional[int] = None) -> str`: Get the sprint name for a date
+  * `datestr`: The date to find a sprint for
+  * `board`: The sprint board, defaults to the default value from config
 
 
 Tips & Tricks
@@ -167,6 +176,43 @@ attachtoepic:
 ```
 
 `jirabp fromtemplate attachtoepic -p EPICS-123`
+
+### Assign sprint
+
+You can set the sprint for an item, either by name or id. There are also a few functions above you can use to calculate
+a sprint based on a date or relative to other sprints. If your team only has one board, you should set the default board
+in the config as noted in the [Configuration section](#Configuration). Otherwise you can specify the board with a
+special field syntax and parameters to the functions.
+
+```yaml
+withsprint:
+  args:
+    date:
+      description: A random date
+      required: true
+  issues:
+    - fields:
+        issuetype: Task
+        summary: By name
+        Sprint:
+          - "Pulse 2024#06"
+    - fields:
+        issuetype: Task
+        summary: By id
+        Sprint:
+          - 9145
+    - fields:
+        issuetype: Task
+        summary: With function
+        Sprint:
+          - "{{sprint_by_date(date)}}"
+    - fields:
+        issuetype: Task
+        summary: With non-default board
+        Sprint:
+          - board: 1032
+            sprint: "{{relative_sprints(sprint_by_date(date, 1032), 2, 1032}}"
+```
 
 ### Don't repeat yourself with YAML
 

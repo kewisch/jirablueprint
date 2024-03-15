@@ -1,14 +1,12 @@
 import http.client
 import json
 import logging
-from datetime import date, timedelta
-from functools import cached_property
+from functools import cached_property, lru_cache
 
 import click
-import type_enforced
-from jinja2 import Environment
 from jira import JIRA
 
+from .jinjaenv import JiraBlueprintEnvironment
 from .util import ConsolePrinter
 
 
@@ -29,7 +27,7 @@ class JiraBlueprint:
         self.serviceconfig = config["services"]
         self.debug = debug
         self.console = ConsolePrinter(debug)
-        self.init_jinja_environment()
+        self.tenv = JiraBlueprintEnvironment(self)
 
         if debug:
             logging.basicConfig()
@@ -38,15 +36,6 @@ class JiraBlueprint:
             requests_log.setLevel(logging.DEBUG)
             requests_log.propagate = True
             http.client.HTTPConnection.debuglevel = 1
-
-    def init_jinja_environment(self):
-        self.tenv = Environment()
-
-        @type_enforced.Enforcer
-        def relative_weeks(datestr: str, weeks: int) -> str:
-            return str(date.fromisoformat(datestr) + timedelta(weeks=weeks))
-
-        self.tenv.globals["relative_weeks"] = relative_weeks
 
     @cached_property
     def full_fields_map(self):
@@ -69,12 +58,25 @@ class JiraBlueprint:
 
         return self.toolconfig["defaults"].get(name, default)
 
+    @lru_cache(maxsize=None)
+    def get_sprints(self, board=None):
+        if not board:
+            board = self.defaultfield("board")
+            if not board:
+                raise Exception("No default board specified in config")
+        return self.jira.sprints(board, state="active,future")
+
     def _format_value(self, value, args):
         return self.tenv.from_string(value).render(**args)
 
     def _translate_type_value(self, key, schema, value, args):
         if key == "parent":
             return {"key": value}
+
+        if schema.get("custom", "") == "com.pyxis.greenhopper.jira:gh-sprint":
+            # Slight adjustment so we can deal with this as a standard array
+            schema["items"] = "com.pyxis.greenhopper.jira:gh-sprint"
+
         if schema["type"] in ("string", "date", "datetime", "option2", "any"):
             return self._format_value(value, args)
         elif schema["type"] == "number":
@@ -94,6 +96,22 @@ class JiraBlueprint:
                     value,
                 )
             )
+        elif schema["type"] == "com.pyxis.greenhopper.jira:gh-sprint":
+            if isinstance(value, dict):
+                board = value["board"]
+                formatted = self._format_value(value["sprint"], args)
+            else:
+                board = None
+                formatted = self.format_value(value, args)
+
+            if isinstance(formatted, int):
+                return {"set": formatted}
+            elif isinstance(formatted, str):
+                sprints = self.get_sprints(board)
+                for sprint in sprints:
+                    if sprint.name == formatted:
+                        return {"set": sprint.id}
+                raise Exception(f"Could not find active/future sprint: {formatted}")
         else:
             raise Exception("Unknown field type: " + str(schema))
 
@@ -140,6 +158,13 @@ class JiraBlueprint:
             if assignee:
                 finalfields["assignee"] = {"id": assignee}
 
+            addsprints = []
+            sprintfield = self.rev_fields_map.get("Sprint", None)
+            if sprintfield and sprintfield in finalfields:
+                # We need to add the sprint using a different api
+                addsprints = [field["set"] for field in finalfields[sprintfield]]
+                del finalfields[sprintfield]
+
             issue = None
             if dry:
                 self.console.print(f"Would creating issue {finalfields['summary']}...")
@@ -152,6 +177,14 @@ class JiraBlueprint:
                 )
                 issue = self.jira.create_issue(fields=finalfields)
                 self.console.print(" " + issue.permalink(), indent=False)
+
+            for sprintid in addsprints:
+                if dry:
+                    self.console.print(
+                        f"Would add just created issue to sprint: {sprintid}"
+                    )
+                else:
+                    self.jira.add_issues_to_sprint(sprintid, [issue.key])
 
             if "children" in issuemeta:
                 self.console.indent()
