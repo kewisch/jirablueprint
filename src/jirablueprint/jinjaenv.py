@@ -27,12 +27,6 @@ class JiraBlueprintEnvironment(Environment):
                     return sprint
         return None
 
-    def _find_sprint_by_name(self, sprintstr, board=None):
-        for sprint in self.jirabp.get_sprints(board):
-            if sprint.name == sprintstr:
-                return sprint
-        return None
-
     @type_enforced.Enforcer
     def relative_weeks(self, datestr: str, weeks: int) -> str:
         return str(date.fromisoformat(datestr) + timedelta(weeks=weeks))
@@ -59,7 +53,7 @@ class JiraBlueprintEnvironment(Environment):
         if sprints == 0:
             return sprintstr
 
-        sprint = self._find_sprint_by_name(sprintstr, board)
+        sprint = self.jirabp.get_sprint_name_dict(board).get(sprintstr)
         if not sprint:
             raise Exception(f"Could not find active/future sprint {sprintstr}")
 

@@ -67,6 +67,16 @@ class JiraBlueprint:
                 raise Exception("No default board specified in config")
         return self.jira.sprints(board, state="active,future")
 
+    @lru_cache(maxsize=None)
+    def get_sprint_dict(self, board=None):
+        sprints = self.get_sprints(board)
+        return {sprint.id: sprint for sprint in sprints}
+
+    @lru_cache(maxsize=None)
+    def get_sprint_name_dict(self, board=None):
+        sprints = self.get_sprints(board)
+        return {sprint.name: sprint for sprint in sprints}
+
     def _format_value(self, value, args):
         return self.tenv.from_string(value).render(**args)
 
@@ -111,12 +121,12 @@ class JiraBlueprint:
                 formatted = self._format_value(value, args)
 
             if isinstance(formatted, int):
-                return {"set": formatted}
+                return {"board": board, "sprint": formatted}
             elif isinstance(formatted, str):
                 sprints = self.get_sprints(board)
                 for sprint in sprints:
                     if sprint.name == formatted:
-                        return {"set": sprint.id}
+                        return {"board": board, "id": sprint.id}
                 raise Exception(f"Could not find active/future sprint: {formatted}")
         else:
             raise Exception("Unknown field type: " + str(schema))
@@ -168,29 +178,41 @@ class JiraBlueprint:
             sprintfield = self.rev_fields_map.get("Sprint", None)
             if sprintfield and sprintfield in finalfields:
                 # We need to add the sprint using a different api
-                addsprints = [field["set"] for field in finalfields[sprintfield]]
+                addsprints = finalfields[sprintfield]
                 del finalfields[sprintfield]
+
+                def map_sprint(item):
+                    sprintdict = self.get_sprint_dict(item["board"])[item["id"]].name
+                    return sprintdict[item["id"]].name
+
+                sprintinfo = ",".join(map(map_sprint, addsprints))
 
             issue = None
             if dry:
-                self.console.print(f"Would creating issue {finalfields['summary']}...")
+                if len(addsprints):
+                    self.console.print(
+                        f"Would creating issue {finalfields['summary']} in {sprintinfo}"
+                    )
+                else:
+                    self.console.print(f"Would creating issue {finalfields['summary']}")
                 self.console.indent()
                 self.console.debug(json.dumps(finalfields, indent=2))
                 self.console.dedent()
             else:
-                self.console.print(
-                    f"Creating issue {finalfields['summary']}...", end=""
-                )
+                if len(addsprints):
+                    self.console.print(
+                        f"Creating issue {finalfields['summary']} in {sprintinfo}...",
+                        end="",
+                    )
+                else:
+                    self.console.print(
+                        f"Creating issue {finalfields['summary']}...", end=""
+                    )
                 issue = self.jira.create_issue(fields=finalfields)
                 self.console.print(" " + issue.permalink(), indent=False)
 
-            for sprintid in addsprints:
-                if dry:
-                    self.console.print(
-                        f"Would add just created issue to sprint: {sprintid}"
-                    )
-                else:
-                    self.jira.add_issues_to_sprint(sprintid, [issue.key])
+                for sprint in addsprints:
+                    self.jira.add_issues_to_sprint(sprint["id"], [issue.key])
 
             if "children" in issuemeta:
                 self.console.indent()
