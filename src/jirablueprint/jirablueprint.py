@@ -1,6 +1,7 @@
 import http.client
 import json
 import logging
+from collections.abc import MutableSequence
 from functools import cached_property, lru_cache
 
 import click
@@ -88,6 +89,11 @@ class JiraBlueprint:
         elif schema["type"] == "option":
             return {"value": self._format_value(value, args)}
         elif schema["type"] == "array":
+            if not isinstance(value, MutableSequence):
+                raise Exception(
+                    f"Value for {self.fields_map.get(key, key)} must be a list, not a scalar: {value}"
+                )
+
             return list(
                 map(
                     lambda item: self._translate_type_value(
