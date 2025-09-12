@@ -46,18 +46,13 @@ use_parentheses = true
 line_length = 88
 
 [tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py3
+requires = ["tox>=4.19"]
+env_list = ["py3"]
 
-[testenv]
-deps =
-  black
-  isort
-  flake8
-  Flake8-pyproject
-commands =
- black src
- isort src
- flake8 src
-"""
+[tool.tox.env_run_base]
+deps = ["black", "isort", "flake8", "flake8-pyproject"]
+commands = [
+  ["black", "src"],
+  ["isort", "src"],
+  ["flake8", "src"],
+]
