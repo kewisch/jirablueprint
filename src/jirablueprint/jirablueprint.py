@@ -217,6 +217,10 @@ class JiraBlueprint:
             if "children" in issuemeta:
                 self.console.indent()
                 self.process_issues(
-                    issuemeta["children"], args, issue.key if issue else None, assignee, dry
+                    issuemeta["children"],
+                    args,
+                    issue.key if issue else None,
+                    assignee,
+                    dry,
                 )
                 self.console.dedent()
